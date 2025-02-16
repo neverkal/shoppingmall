@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import sys
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -86,8 +87,15 @@ DATABASES = {
         'PASSWORD': 'your_password',          # 사용자 비밀번호
         'HOST': '127.0.0.1',                  # 데이터베이스 호스트 (로컬)
         'PORT': '3306',                       # 기본 포트 번호
-    }
+    },
 }
+
+# 테스트 코드 실행 시 SQLite 사용
+if 'test' in sys.argv or 'test_coverage' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'test_db.sqlite3'),
+    }
 
 
 # Password validation

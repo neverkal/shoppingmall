@@ -8,10 +8,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from common.response.response import ErrorResponse
+from common.response import ErrorResponse
 from coupon.models import Coupon
 from .models import Product
-from .response.product_detail import ProductDetail
+from product.response import ProductDetailResponse
 from .serializers import ProductSerializer, ProductDetailSerializer
 
 
@@ -54,7 +54,6 @@ class ProductDetailView(APIView):
         # 상품 조회
         try:
             product: Product = Product.objects.get(id=product_id)
-            print(product)
         except Product.DoesNotExist:
             return ErrorResponse.not_found("Product not found.")
 
@@ -71,7 +70,7 @@ class ProductDetailView(APIView):
         discounted_price = product.calculate_discounted_price()
         final_price_with_coupon = product.calculate_final_price(coupon=coupon)
 
-        product_detail = ProductDetail(
+        product_detail = ProductDetailResponse(
             id=product.id,
             name=product.name,
             description=product.description,

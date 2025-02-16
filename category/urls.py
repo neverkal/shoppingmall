@@ -2,7 +2,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import CategoryViewSet
 
-router = DefaultRouter()
+router: DefaultRouter = DefaultRouter()
 router.register('', CategoryViewSet)
 
 urlpatterns = [

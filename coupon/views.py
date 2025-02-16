@@ -1,13 +1,16 @@
+from typing import Any
+
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from common.response.response import ErrorResponse
+from common.response import ErrorResponse
 from product.models import Product
 from .models import Coupon
-from .response.coupon_product import CouponProduct
+from coupon.response import CouponProductResponse
 from .serializers import CouponSerializer
+
 
 class CouponViewSet(ModelViewSet):
     queryset = Coupon.objects.all()
@@ -17,30 +20,40 @@ class CouponViewSet(ModelViewSet):
 
 class CouponApplyView(APIView):
 
-    def post(self, request, *args, **kwargs) -> Response:
-        product_id: int = request.data.get('product_id')  # 상품 ID
-        coupon_code: str = request.data.get('coupon_code')  # 쿠폰 코드
+    def post(self, request: Any, *args: Any, **kwargs: Any) -> Response:
+        product_id: int = request.data.get('product_id')
+        coupon_code: str = request.data.get('coupon_code')
 
-        # 상품 확인
         try:
-            product = Product.objects.get(id=product_id)
+            product = self._get_product(product_id)
+            coupon = self._get_coupon(coupon_code)
         except Product.DoesNotExist:
             return ErrorResponse.not_found("Product not found.")
-
-        # 쿠폰 확인
-        try:
-            coupon = Coupon.objects.get(code=coupon_code)
         except Coupon.DoesNotExist:
             return ErrorResponse.not_found("Coupon not found.")
 
-        # 쿠폰 적용 가능 여부 확인
         if not product.coupon_applicable:
             return ErrorResponse.bad_request("Coupon cannot be applied to this product.")
 
         discounted_price = product.calculate_discounted_price()
         final_price_with_coupon = product.calculate_final_price(coupon=coupon)
 
-        dto = CouponProduct(
+        response = self._create_coupon_product_response(product, discounted_price, final_price_with_coupon)
+
+        return Response(response.dict(), status=status.HTTP_200_OK)
+
+    @staticmethod
+    def _get_product(product_id: int) -> Product:
+        return Product.objects.get(id=product_id)
+
+    @staticmethod
+    def _get_coupon(coupon_code: str) -> Coupon:
+        return Coupon.objects.get(code=coupon_code)
+
+    @staticmethod
+    def _create_coupon_product_response(product: Product, discounted_price: int,
+                                        final_price_with_coupon: int) -> CouponProductResponse:
+        return CouponProductResponse(
             id=product.id,
             name=product.name,
             description=product.description,
@@ -51,5 +64,3 @@ class CouponApplyView(APIView):
             discounted_price=discounted_price,
             final_price_with_coupon=final_price_with_coupon,
         )
-
-        return Response(dto.dict(), status=status.HTTP_200_OK)

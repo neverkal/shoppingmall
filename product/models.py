@@ -18,14 +18,14 @@ class Product(models.Model):
 
     def calculate_discounted_price(self) -> int:
         """할인율을 적용한 가격 계산"""
-        discounted_price = self.price * (1 - self.discount_rate)
+        discounted_price = Decimal(self.price) * (Decimal('1.00') - Decimal(str(self.discount_rate)))
         return int(discounted_price)
 
-    def calculate_final_price(self, coupon: Optional["Coupon"] = None):
+    def calculate_final_price(self, coupon: Optional[Coupon] = None) -> int:
         """최종 가격 계산 (쿠폰 적용 포함)"""
-        final_price = self.calculate_discounted_price()
+        final_price = Decimal(self.calculate_discounted_price())
         if coupon and self.coupon_applicable:
-            final_price *= (1 - coupon.discount_rate)
+            final_price *= (Decimal('1.00') - Decimal(coupon.discount_rate))
         return int(final_price)
 
     def __str__(self) -> str:

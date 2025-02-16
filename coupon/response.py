@@ -2,7 +2,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 
-class CouponProduct(BaseModel):
+class CouponProductResponse(BaseModel):
     id: int
     name: str
     description: str
