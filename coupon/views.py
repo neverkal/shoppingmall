@@ -1,11 +1,11 @@
 from typing import Any
 
 from rest_framework import status
+from rest_framework.exceptions import NotFound, ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import ModelViewSet
 
-from common.response import ErrorResponse
 from product.models import Product
 from .models import Coupon
 from coupon.response import CouponProductResponse
@@ -28,12 +28,12 @@ class CouponApplyView(APIView):
             product = self._get_product(product_id)
             coupon = self._get_coupon(coupon_code)
         except Product.DoesNotExist:
-            return ErrorResponse.not_found("Product not found.")
+            raise NotFound("Product not found.")
         except Coupon.DoesNotExist:
-            return ErrorResponse.not_found("Coupon not found.")
+            raise NotFound("Coupon not found.")
 
         if not product.coupon_applicable:
-            return ErrorResponse.bad_request("Coupon cannot be applied to this product.")
+            raise ParseError("Coupon cannot be applied to this product.")
 
         discounted_price = product.calculate_discounted_price()
         final_price_with_coupon = product.calculate_final_price(coupon=coupon)

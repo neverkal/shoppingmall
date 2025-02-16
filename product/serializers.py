@@ -2,6 +2,7 @@ from typing import Optional
 from urllib.request import Request
 
 from rest_framework import serializers
+from rest_framework.exceptions import NotFound
 
 from coupon.models import Coupon
 from .models import Product
@@ -17,6 +18,7 @@ class ProductSerializer(serializers.ModelSerializer):
 
 
 class ProductDetailSerializer(serializers.ModelSerializer):
+    category = serializers.CharField(source='category.name')
     discounted_price = serializers.SerializerMethodField()
     final_price_with_coupon = serializers.SerializerMethodField()
 
@@ -44,4 +46,4 @@ class ProductDetailSerializer(serializers.ModelSerializer):
         try:
             return Coupon.objects.get(code=coupon_code)
         except Coupon.DoesNotExist:
-            return None
+            raise NotFound(detail="Coupon not found.")

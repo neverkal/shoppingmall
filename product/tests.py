@@ -107,7 +107,7 @@ class ProductDetailViewTest(APITestCase):
             coupon_applicable=True
         )
         self.coupon: Coupon = Coupon.objects.create(code="할인10", discount_rate=0.1)
-        self.url: str = reverse('product-detail', kwargs={'product_id': self.product.id})
+        self.url: str = reverse('product-detail', kwargs={'id': self.product.id})
 
     def test_get_product_detail_without_coupon(self) -> None:
         response: Response = self.client.get(self.url)
@@ -126,7 +126,7 @@ class ProductDetailViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_nonexistent_product(self) -> None:
-        url: str = reverse('product-detail', kwargs={'product_id': 9999})  # 존재하지 않는 상품 ID
+        url: str = reverse('product-detail', kwargs={'id': 9999})  # 존재하지 않는 상품 ID
         response: Response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 

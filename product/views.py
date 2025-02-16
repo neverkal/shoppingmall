@@ -4,30 +4,33 @@ from django.db.models import QuerySet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
+from rest_framework.exceptions import NotFound
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
 
-from common.response import ErrorResponse
-from coupon.models import Coupon
 from .models import Product
-from product.response import ProductDetailResponse
 from .serializers import ProductSerializer, ProductDetailSerializer
 
 
-class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.all()
-    serializer_class = ProductSerializer
+class ProductListView(APIView):
 
-    def get_queryset(self) -> "QuerySet[Product]":
-        category_id: Optional[str] = self.request.query_params.get('category_id')
+    @swagger_auto_schema(
+        operation_description="상품 정보를 조회합니다.",
+        responses={
+            200: ProductSerializer(many=True),
+            404: openapi.Response(description="상품 또는 쿠폰을 찾을 수 없습니다."),
+        },
+    )
+    def get(self, request) -> Response:
+        category_id: Optional[str] = request.query_params.get('category_id')
 
         if category_id:
-            queryset = Product.objects.filter(category_id=category_id)
+            queryset: QuerySet[Product] = Product.objects.filter(category_id=category_id)
         else:
-            queryset = Product.objects.all()
+            queryset: QuerySet[Product] = Product.objects.all()
 
-        return queryset
+        serializer = ProductSerializer(queryset, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
 
 
 class ProductDetailView(APIView):
@@ -50,36 +53,13 @@ class ProductDetailView(APIView):
             404: openapi.Response(description="상품 또는 쿠폰을 찾을 수 없습니다."),
         },
     )
-    def get(self, request, product_id) -> Response:
+    def get(self, request, id) -> Response:
         # 상품 조회
         try:
-            product: Product = Product.objects.get(id=product_id)
+            product: Product = Product.objects.get(id=id)
         except Product.DoesNotExist:
-            return ErrorResponse.not_found("Product not found.")
+            raise NotFound(detail="Product not found.")
 
-        # 쿠폰 코드 확인 (쿼리 파라미터)
-        coupon_code: Optional[str] = request.query_params.get('coupon_code', None)
-        coupon: Optional[Coupon] = None
-
-        if coupon_code:
-            try:
-                coupon = Coupon.objects.get(code=coupon_code)
-            except Coupon.DoesNotExist:
-                return ErrorResponse.not_found("Coupon not found.")
-
-        discounted_price = product.calculate_discounted_price()
-        final_price_with_coupon = product.calculate_final_price(coupon=coupon)
-
-        product_detail = ProductDetailResponse(
-            id=product.id,
-            name=product.name,
-            description=product.description,
-            price=product.price,
-            category=product.category.name,
-            discount_rate=product.discount_rate,
-            coupon_applicable=product.coupon_applicable,
-            discounted_price=discounted_price,
-            final_price_with_coupon=final_price_with_coupon,
-        )
-
-        return Response(product_detail.dict(), status=status.HTTP_200_OK)
+        # ProductDetailSerializer 사용
+        serializer = ProductDetailSerializer(product, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
