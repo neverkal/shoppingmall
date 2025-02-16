@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword  # MySQL 루트 비밀번호
+      MYSQL_DATABASE: shopdiscount       # 생성할 데이터베이스 이름
+      MYSQL_USER: django_user            # 사용자 이름
+      MYSQL_PASSWORD: your_password      # 사용자 비밀번호
+    ports:
+      - "3306:3306"                      # 호스트와 컨테이너의 포트 매핑
+    volumes:
+      - db_data:/var/lib/mysql           # 데이터 볼륨을 컨테이너에 연결
+
+volumes:
+  db_data:
