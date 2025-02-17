@@ -23,9 +23,7 @@ class ProductListView(APIView):
     )
     def get(self, request) -> Response:
         category_id: Optional[str] = request.query_params.get('category_id')
-        queryset = cast(
-            QuerySet[Product], Product.objects.filter(category_id=category_id) if category_id else Product.objects.all()
-        )
+        queryset: QuerySet[Product] = Product.objects.filter(category_id=category_id) if category_id else Product.objects.all()
         serializer = ProductSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 

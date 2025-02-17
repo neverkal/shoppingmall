@@ -12,7 +12,7 @@ class Product(models.Model):
     name: str = models.CharField(max_length=255)
     description: str = models.TextField()
     price: int = models.IntegerField()
-    category: "Category" = models.ForeignKey('category.Category', on_delete=models.CASCADE, related_name='products')
+    category: Category = models.ForeignKey('category.Category', on_delete=models.CASCADE, related_name='products')
     discount_rate: float = models.FloatField(default=0.0)
     coupon_applicable: bool = models.BooleanField(default=False)
     coupon: Optional[Coupon] = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True,

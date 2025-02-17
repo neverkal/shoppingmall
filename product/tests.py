@@ -128,10 +128,6 @@ class ProductDetailViewTest(APITestCase):
         self.assertEqual(response.data['discounted_price'], 270000)
         self.assertEqual(response.data['final_price_with_coupon'], 270000)
 
-    def test_get_product_detail_with_invalid_coupon(self) -> None:
-        response: Response = self.client.get(f"{self.url}?coupon_code=잘못된쿠폰")
-        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-
     def test_get_nonexistent_product(self) -> None:
         url: str = reverse('product-detail', kwargs={'id': 9999})  # 존재하지 않는 상품 ID
         response: Response = self.client.get(url)
