@@ -7,8 +7,7 @@ from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from shoppingmall.common.mixin import SwaggerResponseMixin
-from .mixin import ProductMixin
+from .mixin import ProductMixin, ProductResponseMixin
 from .models import Product
 from .serializers import ProductSerializer, ProductDetailSerializer
 
@@ -23,12 +22,15 @@ class ProductListView(APIView):
     )
     def get(self, request) -> Response:
         category_id: Optional[str] = request.query_params.get('category_id')
-        queryset: QuerySet[Product] = Product.objects.filter(category_id=category_id) if category_id else Product.objects.all()
+        if category_id:
+            queryset = Product.objects.filter(category_id=category_id)
+        else:
+            queryset = Product.objects.all()
         serializer = ProductSerializer(queryset, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class ProductDetailView(APIView, SwaggerResponseMixin, ProductMixin):
+class ProductDetailView(APIView, ProductResponseMixin, ProductMixin):
     """
     상품 상세 정보를 조회하는 API
     - 할인율 적용 가격 및 쿠폰 적용 최종 가격 반환
@@ -38,7 +40,7 @@ class ProductDetailView(APIView, SwaggerResponseMixin, ProductMixin):
         responses={
             200: openapi.Response(
                 description="쿠폰 상세 정보 조회 성공",
-                schema=SwaggerResponseMixin.get_product_response_schema()
+                schema=ProductResponseMixin.get_product_response_schema()
             ),
             404: openapi.Response(
                 description="Not found",

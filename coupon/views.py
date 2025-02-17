@@ -9,8 +9,7 @@ from rest_framework.views import APIView
 
 from product.mixin import ProductMixin
 from product.models import Product
-from shoppingmall.common.mixin import SwaggerResponseMixin
-from .mixin import CouponMixin
+from .mixin import CouponMixin, CouponApplyResponseMixin
 from .models import Coupon
 from coupon.response import CouponProductResponse
 from .serializers import CouponSerializer, CouponApplySerializer, CouponProductResponseSerializer
@@ -78,7 +77,7 @@ class CouponDetailView(APIView, CouponMixin):
         return Response(serializer.data)
 
 
-class CouponApplyView(APIView, SwaggerResponseMixin, ProductMixin, CouponMixin):
+class CouponApplyView(APIView, ProductMixin, CouponMixin, CouponApplyResponseMixin):
 
     @swagger_auto_schema(
         operation_description="상품에 쿠폰을 적용합니다.",
@@ -93,7 +92,7 @@ class CouponApplyView(APIView, SwaggerResponseMixin, ProductMixin, CouponMixin):
         responses={
             200: openapi.Response(
                 description="Coupon applied successfully",
-                schema=SwaggerResponseMixin.get_product_response_schema()
+                schema=CouponApplyResponseMixin.get_coupon_apply_response_schema()
             ),
             404: openapi.Response(
                 description="Not found",
@@ -139,11 +138,8 @@ class CouponApplyView(APIView, SwaggerResponseMixin, ProductMixin, CouponMixin):
         return {
             'id': product.id,
             'name': product.name,
-            'description': product.description,
             'price': product.price,
-            'category': product.category.name,
             'discount_rate': product.discount_rate,
-            'coupon_applicable': product.coupon_applicable,
             'discounted_price': product.calculate_discounted_price(),
             'final_price_with_coupon': product.calculate_final_price(),
         }

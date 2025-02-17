@@ -81,5 +81,31 @@ Swagger를 사용한 API 문서를 제공합니다. 개발 서버를 실행한 �
 * Swagger UI: http://localhost:8000/swagger/
 * Redoc: http://localhost:8000/redoc/
 
-# ERD
+# DB
+
+## ERD
 ![erd.png](erd.png)
+
+## Dummy Data
+```sql
+INSERT INTO category (id, name) VALUES
+(1, '전자제품'),
+(2, '가구'),
+(3, '의류'),
+(4, '도서'),
+(5, '주방용품');
+
+INSERT INTO coupon (id, code, discount_rate) VALUES
+(1, 'DISCOUNT10', 0.10),
+(2, 'DISCOUNT20', 0.20),
+(3, 'SPRINGSALE', 0.15);
+
+INSERT INTO product (id, name, description, price, category_id, discount_rate, coupon_applicable, coupon_id) VALUES
+(1, '삼성 스마트 TV', '최신형 4K UHD 삼성 스마트 TV', 1500000, 1, 0.05, TRUE, 1),
+(2, 'LG 냉장고', '대용량 LG 냉장고, 에너지 효율 등급 A++', 2000000, 1, 0.10, TRUE, 2),
+(3, '원목 책상', '튼튼하고 고급스러운 원목 책상', 300000, 2, 0.00, FALSE, NULL),
+(4, '소파 세트', '편안한 거실 소파 세트', 800000, 2, 0.15, TRUE, 3),
+(5, '겨울 패딩', '따뜻하고 가벼운 겨울 패딩', 200000, 3, 0.20, FALSE, NULL),
+(6, '베스트셀러 소설', '감동적인 이야기가 담긴 베스트셀러 소설', 15000, 4, 0.05, FALSE, NULL),
+(7, '프라이팬 세트', '내구성이 뛰어난 주방용 프라이팬 세트', 50000, 5, 0.10, TRUE, 1);
+```

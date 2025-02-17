@@ -1,3 +1,4 @@
+from drf_yasg import openapi
 from rest_framework.exceptions import NotFound
 
 from coupon.models import Coupon
@@ -17,3 +18,22 @@ class CouponMixin:
             return Coupon.objects.get(pk=pk)
         except Coupon.DoesNotExist:
             raise NotFound("Coupon not found.")
+
+
+class CouponApplyResponseMixin:
+    @staticmethod
+    def get_coupon_apply_response_schema():
+        return openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'name': openapi.Schema(type=openapi.TYPE_STRING),
+                'price': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'discount_rate': openapi.Schema(type=openapi.TYPE_NUMBER),
+                'discounted_price': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'final_price_with_coupon': openapi.Schema(type=openapi.TYPE_INTEGER),
+            },
+            required=[
+                'id', 'name', 'price', 'discount_rate', 'discounted_price', 'final_price_with_coupon'
+            ]
+        )

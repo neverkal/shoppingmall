@@ -16,10 +16,7 @@ class CouponApplySerializer(serializers.Serializer):
 class CouponProductResponseSerializer(serializers.Serializer):
     id = serializers.IntegerField()
     name = serializers.CharField()
-    description = serializers.CharField()
     price = serializers.IntegerField()
-    category = serializers.CharField()
     discount_rate = serializers.FloatField()
-    coupon_applicable = serializers.BooleanField()
     discounted_price = serializers.IntegerField()
     final_price_with_coupon = serializers.IntegerField()
