@@ -8,15 +8,16 @@ from coupon.models import Coupon
 
 
 class Product(models.Model):
-    id: int = models.BigAutoField(primary_key=True)
-    name: str = models.CharField(max_length=255)
-    description: str = models.TextField()
-    price: int = models.IntegerField()
-    category: Category = models.ForeignKey('category.Category', on_delete=models.CASCADE, related_name='products')
-    discount_rate: float = models.FloatField(default=0.0)
-    coupon_applicable: bool = models.BooleanField(default=False)
+    id: int = models.BigAutoField(primary_key=True, verbose_name="상품 ID")
+    name: str = models.CharField(max_length=255, verbose_name="상품명")
+    description: str = models.TextField(verbose_name="상품 상세 설명")
+    price: int = models.IntegerField(verbose_name="상품 가격")
+    category: Category = models.ForeignKey(
+        'category.Category', on_delete=models.CASCADE, related_name='products', verbose_name="상품 카테고리")
+    discount_rate: float = models.FloatField(default=0.0, verbose_name="할인율")
+    coupon_applicable: bool = models.BooleanField(default=False, verbose_name="쿠폰 적용 가능 여부")
     coupon: Optional[Coupon] = models.ForeignKey(Coupon, on_delete=models.SET_NULL, null=True, blank=True,
-                                                 related_name='products')
+                                                 related_name='products', verbose_name="상품 적용 쿠폰")
 
     def calculate_discounted_price(self) -> int:
         """할인율을 적용한 가격 계산"""

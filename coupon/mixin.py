@@ -26,12 +26,12 @@ class CouponApplyResponseMixin:
         return openapi.Schema(
             type=openapi.TYPE_OBJECT,
             properties={
-                'id': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'name': openapi.Schema(type=openapi.TYPE_STRING),
-                'price': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'discount_rate': openapi.Schema(type=openapi.TYPE_NUMBER),
-                'discounted_price': openapi.Schema(type=openapi.TYPE_INTEGER),
-                'final_price_with_coupon': openapi.Schema(type=openapi.TYPE_INTEGER),
+                'id': openapi.Schema(type=openapi.TYPE_INTEGER, description="상품ID"),
+                'name': openapi.Schema(type=openapi.TYPE_STRING, description="상품명"),
+                'price': openapi.Schema(type=openapi.TYPE_INTEGER, description="상품 가격"),
+                'discount_rate': openapi.Schema(type=openapi.TYPE_NUMBER, description="상품 할인율"),
+                'discounted_price': openapi.Schema(type=openapi.TYPE_INTEGER, description="상품 할인가"),
+                'final_price_with_coupon': openapi.Schema(type=openapi.TYPE_INTEGER, description="최종 할인가"),
             },
             required=[
                 'id', 'name', 'price', 'discount_rate', 'discounted_price', 'final_price_with_coupon'

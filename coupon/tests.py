@@ -97,7 +97,7 @@ class CouponApplyViewTest(APITestCase):
     def test_apply_coupon_coupon_not_found(self) -> None:
         data: Dict[str, Any] = {
             'product_id': self.product.id,
-            'coupon_code': '잘못된코드'  # 존재하지 않는 쿠폰 코드
+            'coupon_code': 'VALIDCODE123'  # 존재하지 않는 쿠폰 코드
         }
         response: Response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
@@ -111,3 +111,22 @@ class CouponApplyViewTest(APITestCase):
         }
         response: Response = self.client.post(self.url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_apply_coupon_invalid_code_format(self) -> None:
+        data: Dict[str, Any] = {
+            'product_id': self.product.id,
+            'coupon_code': 'invalid_code'  # 소문자와 특수문자를 포함한 잘못된 형식의 쿠폰 코드
+        }
+        response: Response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('쿠폰 코드는 영대문자 또는 한글, 숫자만 입력 가능합니다.', str(response.data))
+
+    def test_apply_coupon_valid_code_format(self) -> None:
+        valid_coupon: Coupon = Coupon.objects.create(code="VALIDCODE123", discount_rate=0.15)
+        data: Dict[str, Any] = {
+            'product_id': self.product.id,
+            'coupon_code': valid_coupon.code
+        }
+        response: Response = self.client.post(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn('final_price_with_coupon', response.data)

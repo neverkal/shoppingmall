@@ -1,6 +1,5 @@
-from typing import Optional, cast
+from typing import Optional
 
-from django.db.models import QuerySet
 from drf_yasg import openapi
 from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
