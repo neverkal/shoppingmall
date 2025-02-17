@@ -24,6 +24,7 @@ class ProductModelTest(TestCase):
             discount_rate=0.1,
             coupon_applicable=True
         )
+        self.coupon: Coupon = Coupon.objects.create(code="할인10", discount_rate=0.1)
 
     def test_product_creation(self) -> None:
         self.assertEqual(self.product.name, "스마트폰")
@@ -38,8 +39,20 @@ class ProductModelTest(TestCase):
         self.assertEqual(self.product.calculate_final_price(), 900000)
 
     def test_calculate_final_price_with_coupon(self) -> None:
-        coupon: Coupon = Coupon.objects.create(code="할인10", discount_rate=0.1)
-        self.assertEqual(self.product.calculate_final_price(coupon), 809999)
+        self.product.coupon = self.coupon
+        self.product.save()
+        self.assertEqual(self.product.calculate_final_price(), 810000)
+
+    def test_calculate_final_price_with_coupon_not_applicable(self) -> None:
+        self.product.coupon_applicable = False
+        self.product.coupon = self.coupon
+        self.product.save()
+        self.assertEqual(self.product.calculate_final_price(), 900000)
+
+    def test_calculate_final_price_with_no_coupon_but_applicable(self) -> None:
+        self.product.coupon = None
+        self.product.save()
+        self.assertEqual(self.product.calculate_final_price(), 900000)
 
 
 class ProductSerializerTest(TestCase):
@@ -114,12 +127,6 @@ class ProductDetailViewTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['discounted_price'], 270000)
         self.assertEqual(response.data['final_price_with_coupon'], 270000)
-
-    def test_get_product_detail_with_coupon(self) -> None:
-        response: Response = self.client.get(f"{self.url}?coupon_code={self.coupon.code}")
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data['discounted_price'], 270000)
-        self.assertEqual(response.data['final_price_with_coupon'], 242999)
 
     def test_get_product_detail_with_invalid_coupon(self) -> None:
         response: Response = self.client.get(f"{self.url}?coupon_code=잘못된쿠폰")

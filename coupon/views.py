@@ -1,46 +1,152 @@
 from typing import Any
 
+from drf_yasg import openapi
+from drf_yasg.utils import swagger_auto_schema
 from rest_framework import status
-from rest_framework.exceptions import NotFound, ParseError
+from rest_framework.exceptions import ParseError
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.viewsets import ModelViewSet
 
+from product.mixin import ProductMixin
 from product.models import Product
+from shoppingmall.common.mixin import SwaggerResponseMixin
+from .mixin import CouponMixin
 from .models import Coupon
 from coupon.response import CouponProductResponse
-from .serializers import CouponSerializer
+from .serializers import CouponSerializer, CouponApplySerializer, CouponProductResponseSerializer
 
 
-class CouponViewSet(ModelViewSet):
-    queryset = Coupon.objects.all()
-    serializer_class = CouponSerializer
-    http_method_names = ["get"]
+class CouponListView(APIView):
+    @swagger_auto_schema(
+        operation_description="쿠폰 목록을 조회합니다.",
+        responses={
+            200: CouponSerializer(many=True),
+            404: openapi.Response(
+                description="Not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            400: openapi.Response(
+                description="Bad request",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            )
+        }
+    )
+    def get(self, request):
+        coupons = Coupon.objects.all()
+        serializer = CouponSerializer(coupons, many=True)
+        return Response(serializer.data)
 
 
-class CouponApplyView(APIView):
+class CouponDetailView(APIView, CouponMixin):
+    @swagger_auto_schema(
+        operation_description="특정 쿠폰의 상세 정보를 조회합니다.",
+        responses={
+            200: CouponSerializer(),
+            404: openapi.Response(
+                description="Not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            400: openapi.Response(
+                description="Bad request",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            )
+        }
+    )
+    def get(self, request, pk):
+        coupon = self.get_coupon_by_pk(pk)
+        serializer = CouponSerializer(coupon)
+        return Response(serializer.data)
 
+
+class CouponApplyView(APIView, SwaggerResponseMixin, ProductMixin, CouponMixin):
+
+    @swagger_auto_schema(
+        operation_description="상품에 쿠폰을 적용합니다.",
+        request_body=openapi.Schema(
+            type=openapi.TYPE_OBJECT,
+            properties={
+                'product_id': openapi.Schema(type=openapi.TYPE_INTEGER, description="상품ID"),
+                'coupon_code': openapi.Schema(type=openapi.TYPE_STRING, description="적용할 쿠폰 코드"),
+            },
+            required=['product_id', 'coupon_code']
+        ),
+        responses={
+            200: openapi.Response(
+                description="Coupon applied successfully",
+                schema=SwaggerResponseMixin.get_product_response_schema()
+            ),
+            404: openapi.Response(
+                description="Not found",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            ),
+            400: openapi.Response(
+                description="Bad request",
+                schema=openapi.Schema(
+                    type=openapi.TYPE_OBJECT,
+                    properties={
+                        'detail': openapi.Schema(type=openapi.TYPE_STRING)
+                    }
+                )
+            )
+        }
+    )
     def post(self, request: Any, *args: Any, **kwargs: Any) -> Response:
-        product_id: int = request.data.get('product_id')
-        coupon_code: str = request.data.get('coupon_code')
+        serializer = CouponApplySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
 
-        try:
-            product = self._get_product(product_id)
-            coupon = self._get_coupon(coupon_code)
-        except Product.DoesNotExist:
-            raise NotFound("Product not found.")
-        except Coupon.DoesNotExist:
-            raise NotFound("Coupon not found.")
+        product = self.get_product(serializer.validated_data['product_id'])
+        coupon = self.get_coupon(serializer.validated_data['coupon_code'])
 
         if not product.coupon_applicable:
             raise ParseError("Coupon cannot be applied to this product.")
 
-        discounted_price = product.calculate_discounted_price()
-        final_price_with_coupon = product.calculate_final_price(coupon=coupon)
+        product.coupon = coupon
+        product.save()
 
-        response = self._create_coupon_product_response(product, discounted_price, final_price_with_coupon)
+        response_data = self.create_product_response(product)
+        response_serializer = CouponProductResponseSerializer(data=response_data)
+        response_serializer.is_valid(raise_exception=True)
 
-        return Response(response.dict(), status=status.HTTP_200_OK)
+        return Response(response_serializer.data, status=status.HTTP_200_OK)
+
+    @staticmethod
+    def create_product_response(product: Product) -> dict:
+        return {
+            'id': product.id,
+            'name': product.name,
+            'description': product.description,
+            'price': product.price,
+            'category': product.category.name,
+            'discount_rate': product.discount_rate,
+            'coupon_applicable': product.coupon_applicable,
+            'discounted_price': product.calculate_discounted_price(),
+            'final_price_with_coupon': product.calculate_final_price(),
+        }
 
     @staticmethod
     def _get_product(product_id: int) -> Product:
